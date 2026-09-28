@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Mozilla+Headline:wght@200..700&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+
+body{
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+.btn{
+    font-size: 0.8rem;
+    font-weight: 700;
+    vertical-align: text-top;
+}
+
+.btn-outline-custom{
+    color: #3a3a3a;
+    border-color: #404040;
+}
+.btn-outline-custom:hover{
+    background-color: #d6d6d6;
+    color: black;
+    border-color: #404040;
+}
+
+a{
+    text-decoration: none;
+}
+a:hover{
+    text-decoration: underline;
+}
+
+.bg-holder{
+    position: absolute;
+    width: 100%;
+    min-height: 100%;
+    top: 0;
+    left: 0;
+    background-size : cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url(/images/Uriangato_side-page.webp);
+    border-radius: 0 5px 5px 0;
+    filter: brightness(0.8);
+}
+
+.divider-content-center{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    background-color: white;
+    font-size: 0.8rem;
+    font-weight: 500;   
+    color: #999;
+}

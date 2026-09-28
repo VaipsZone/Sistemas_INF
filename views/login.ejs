@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Login - TastyApp</title>
+    <%- include('partials/head.ejs') -%>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+    <div class="row vh-100 g-0">
+        <!--Left Side-->
+            <div class="col-lg-6 position-relative d-none d-lg-block">
+                <div class="bg-holder">
+                </div>
+            </div>
+        <!--/ Left Side -->
+        <!-- Right side-->
+            <div class="col-lg-6">
+                <div class="row align-items-center justify-content-center h-100 g-0 px-4 px-sm-0">
+                    <div class="col col-sm-6 col-lg-7 col-xl-6">
+                        <!-- LOGO -->
+                         <a href="#" class ="d-flex justify-content-center mb-0">
+                            <img src="/images/Logo_no_bg.webp" alt="TastyApp Logo" width="200">
+                         </a>
+                         <!--/ LOGO-->
+                         <div class="mb-4 text-center">
+                            <h1 class="fw-bold">Iniciar Sesión</h1>
+                            <p class="text-secondary">Accede a la app</p>
+                         </div>
+                         <!-- SOCIAL LOGIN -->
+                          <button class="btn btn-outline-custom btn-lg w-100 mb-3">
+                            <i class="bi bi-apple text-primary me-1 fs-6"></i> Continuar con Apple ID 
+                          </button>
+                          <button class="btn btn-outline-custom btn-lg w-100 mb-2">
+                            <i class="bi bi-google text-danger me-1 fs-6"></i> Continuar con Google 
+                          </button>
+                         
+                         <!-- DIVISOR -->
+                           <div class="position-relative">
+                             <hr class="text-secondary">
+                             <div class="divider-content-center">O</div>
+                           </div>
+                         <!--/ DIVISOR -->
+                         <!-- FORM -->
+                          <form action="#">
+                             <div class="input-group mb-3">
+                                 <span class="input-group-text bg-white">
+                                     <i class="bi bi-person-circle"></i>
+                                 </span>
+                                 <input type="text" name="username" class="form-control form-control-lg fs-6" placeholder="Usuario" required>
+                             </div>
+                             <div class="input-group mb-3">
+                                 <span class="input-group-text bg-white">
+                                     <i class="bi bi-shield-lock-fill"></i>
+                                 </span>
+                                 <input type="password" name="password" minlength="8" class="form-control form-control-lg fs-6" placeholder="Contraseña" required>
+                             </div>
+                             <div class="input-group mb-3 d-flex justify-content-between">
+                                 <div class="form-check">
+                                     <input type="checkbox" class="form-check-input me-2" id="rememberMe">
+                                     <label for="rememberMe" class="form-check-label text-secondary"><small>Recuérdame</small></label>
+                                 </div>
+                                 <a href="#"><small>¿Olvidaste tu contraseña?</small></a>
+                             </div>
+                                 <button class="btn btn-primary btn-lg w-100">Iniciar sesión</button>
+                          </form>    
+                         <!--/ FORM-->
+                          <div class="mt-4 text-center">
+                             <p class="text-secondary">¿No tienes una cuenta? <a href="/register">Regístrate</a></p>
+                          </div>
+
+                          <!-- SweetAlert2 initialization -->
+                          <script>
+                              const form = document.querySelector('form');
+                              if (form) {
+                                  form.addEventListener('submit', async (e) => {
+                                      e.preventDefault();
+                                      const formData = new FormData(form);
+                                      const obj = Object.fromEntries(formData.entries());
+                                      try {
+                                          const res = await fetch('/login', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify(obj)
+                                          });
+                                          const data = await res.json();
+                                          if (data.success) {
+                                              Swal.fire({
+                                                  title: 'Éxito',
+                                                  text: 'Inicio de sesión correcto',
+                                                  icon: 'success',
+                                                  confirmButtonText: 'Aceptar'
+                                              });
+                                              window.location.href = data.rol === 'admin' ? '/admin/dashboard' : '/';
+                                          } else {
+                                              Swal.fire({
+                                                  title: 'Error',
+                                                  text: data.error || 'Credenciales inválidas',
+                                                  icon: 'error',
+                                                  confirmButtonText: 'Cerrar'
+                                              });
+                                          }
+                                      } catch (err) {
+                                          Swal.fire({
+                                              title: 'Error',
+                                              text: 'Error de comunicación',
+                                              icon: 'error',
+                                              confirmButtonText: 'Cerrar'
+                                          });
+                                      }
+                                  });
+                              }
+                          </script>
+
+                    </div>
+                </div>
+            </div>
+        <!--/ Right side-->
+    </div>
+
+    <%- include('partials/footer.ejs') -%>
+</body>
+</html>

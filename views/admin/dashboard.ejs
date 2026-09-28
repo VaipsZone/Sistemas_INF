@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Panel de Administración - TastyApp</title>
+    <%- include('../partials/head.ejs') -%>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold">Administración de Usuarios</h1>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="bi bi-person-plus me-1"></i>Nuevo usuario
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="logoutButton">Cerrar sesión</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Lista de Usuarios</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="usersTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">Nuevo usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="createForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="createUsername" class="form-label">Usuario</label>
+                            <input type="text" class="form-control" name="username" id="createUsername" minlength="3" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" id="createEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createRol" class="form-label">Rol</label>
+                            <select class="form-select" name="rol" id="createRol" required>
+                                <option value="client">Cliente</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createPassword" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" name="password" id="createPassword" minlength="8" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="editId">
+                        <div class="mb-3">
+                            <label for="editUsername" class="form-label">Usuario</label>
+                            <input type="text" class="form-control" name="username" id="editUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRol" class="form-label">Rol</label>
+                            <select class="form-select" name="rol" id="editRol" required>
+                                <option value="client">Cliente</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPassword" class="form-label">Nueva Contraseña (opcional)</label>
+                            <input type="password" class="form-control" name="password" id="editPassword" minlength="8">
+                            <div class="form-text">Dejar en blanco para no cambiar la contraseña.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer.ejs') -%>
+
+    <script>
+        const showError = (message) => Swal.fire({ title: 'Error', text: message, icon: 'error', confirmButtonText: 'Cerrar' });
+
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            document.cookie = 'token=; Max-Age=0; path=/';
+            window.location.href = '/login';
+        });
+
+        document.getElementById('createForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            try {
+                const res = await fetch('/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData.entries()))
+                });
+                const data = await res.json();
+                if (!res.ok) return showError(data.error || 'No se pudo crear el usuario');
+                bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                event.target.reset();
+                await loadUsers();
+                Swal.fire('Creado', 'El usuario se creó correctamente', 'success');
+            } catch (error) {
+                showError('Error de comunicación');
+            }
+        });
+
+        // Fetch users on load
+        async function loadUsers() {
+            try {
+                const res = await fetch('/admin/users');
+                if (!res.ok) throw new Error('No autorizado');
+                const users = await res.json();
+                const tbody = document.querySelector('#usersTable tbody');
+                tbody.innerHTML = '';
+                users.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${user.log_id}</td>
+                        <td>${user.Usuario}</td>
+                        <td>${user.Email}</td>
+                        <td><span class="badge bg-${user.Rol === 'admin' ? 'danger' : 'secondary'}">${user.Rol}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${user.log_id}" data-username="${user.Usuario}" data-email="${user.Email}" data-rol="${user.Rol}"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${user.log_id}" data-username="${user.Usuario}"><i class="bi bi-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                attachEventListeners();
+            } catch (err) {
+                console.error(err);
+                showError('No se pudo cargar la lista de usuarios');
+            }
+        }
+
+        function attachEventListeners() {
+            // Edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('editId').value = btn.dataset.id;
+                    document.getElementById('editUsername').value = btn.dataset.username;
+                    document.getElementById('editEmail').value = btn.dataset.email;
+                    document.getElementById('editRol').value = btn.dataset.rol;
+                    document.getElementById('editPassword').value = '';
+                    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                    modal.show();
+                });
+            });
+
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    Swal.fire({
+                        title: '¿Eliminar usuario?',
+                        text: `Se eliminará al usuario "${btn.dataset.username}" permanentemente.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            try {
+                                const res = await fetch(`/admin/users/${btn.dataset.id}`, {
+                                    method: 'DELETE',
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    Swal.fire('Eliminado', 'El usuario ha sido eliminado.', 'success');
+                                    loadUsers();
+                                } else {
+                                    Swal.fire('Error', data.error || 'No se pudo eliminar', 'error');
+                                }
+                            } catch (err) {
+                                Swal.fire('Error', 'Error de comunicación', 'error');
+                            }
+                        }
+                    });
+                });
+            });
+        }
+
+        // Edit form submit
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const formData = new FormData(e.target);
+            const obj = Object.fromEntries(formData.entries());
+            // Remove empty password
+            if (!obj.password) delete obj.password;
+            try {
+                const res = await fetch(`/admin/users/${id}/edit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(obj)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    Swal.fire('Actualizado', 'Usuario actualizado correctamente', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    loadUsers();
+                } else {
+                    Swal.fire('Error', data.error || 'No se pudo actualizar', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'Error de comunicación', 'error');
+            }
+        });
+
+        // Initial load
+        loadUsers();
+    </script>
+</body>
+</html>
