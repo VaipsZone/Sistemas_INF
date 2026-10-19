@@ -1,6 +1,5 @@
 import db from "../database/db.js";
-import encrypt from "bcryptjs";
-
+import { auth } from "../lib/auth.js";
 const allowedRoles = new Set(["admin", "client"]);
 const emailPattern = /^\S+@\S+\.\S+$/;
 
@@ -13,8 +12,8 @@ const validateUser = ({ username, email, password, requirePassword = false }) =>
 
 const findDuplicate = async (connection, username, email, id = null) => {
     const query = id
-        ? "SELECT log_id FROM LOGINS WHERE (Usuario = ? OR Email = ?) AND log_id <> ? LIMIT 1"
-        : "SELECT log_id FROM LOGINS WHERE Usuario = ? OR Email = ? LIMIT 1";
+        ? "SELECT id FROM user WHERE (name = ? OR email = ?) AND id <> ? LIMIT 1"
+        : "SELECT id FROM user WHERE name = ? OR email = ? LIMIT 1";
     const params = id ? [username, email, id] : [username, email];
     const [rows] = await connection.query(query, params);
     return rows.length > 0;
@@ -31,12 +30,25 @@ export const createUser = async (req, res) => {
         if (await findDuplicate(connection, username.trim(), email.trim())) {
             return res.status(409).json({ error: "El usuario o email ya está registrado" });
         }
-        const hashed = await encrypt.hash(password, 12);
-        const [result] = await connection.query(
-            "INSERT INTO LOGINS (Usuario, Email, Password, Rol) VALUES (?, ?, ?, ?)",
-            [username.trim(), email.trim(), hashed, rol]
+
+        const result = await auth.api.signUpEmail({
+            body: {
+                name: username.trim(),
+                email: email.trim(),
+                password,
+            },
+        });
+
+        if (!result?.user?.id) {
+            return res.status(400).json({ error: "No se pudo crear el usuario" });
+        }
+
+        await connection.query(
+            "UPDATE user SET role = ? WHERE id = ?",
+            [rol, result.user.id]
         );
-        res.status(201).json({ success: true, id: result.insertId });
+
+        res.status(201).json({ success: true, id: result.user.id });
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({ error: "Error interno" });
@@ -51,7 +63,7 @@ export const getDashboard = async (req, res) => {
     try {
         connection = await db.pool.getConnection();
         const [users] = await connection.query(
-            "SELECT log_id, Usuario, Email, Rol FROM LOGINS"
+            "SELECT id AS log_id, name AS Usuario, email AS Email, role AS Rol FROM user"
         );
         res.render("admin/dashboard", { users });
     } catch (error) {
@@ -68,7 +80,7 @@ export const getUsers = async (req, res) => {
     try {
         connection = await db.pool.getConnection();
         const [users] = await connection.query(
-            "SELECT log_id, Usuario, Email, Rol FROM LOGINS"
+            "SELECT id AS log_id, name AS Usuario, email AS Email, role AS Rol FROM user"
         );
         res.json(users);
     } catch (error) {
@@ -94,22 +106,11 @@ export const updateUser = async (req, res) => {
             return res.status(409).json({ error: "El usuario o email ya está registrado" });
         }
 
-        const updates = [];
-        const values = [];
+        if (password) return res.status(400).json({ error: "La contraseña debe cambiarse mediante Better Auth" });
 
-        updates.push("Usuario = ?", "Email = ?", "Rol = ?");
-        values.push(username.trim(), email.trim(), rol);
-        if (password) {
-            if (password.length < 8) return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres" });
-            const hashed = await encrypt.hash(password, 12);
-            updates.push("Password = ?");
-            values.push(hashed);
-        }
+        const query = "UPDATE user SET name = ?, email = ?, role = ? WHERE id = ?";
 
-        values.push(id);
-        const query = `UPDATE LOGINS SET ${updates.join(", ")} WHERE log_id = ?`;
-
-        await connection.query(query, values);
+        await connection.query(query, [username.trim(), email.trim(), rol, id]);
         res.json({ success: true });
     } catch (error) {
         console.error("Error updating user:", error);
@@ -127,9 +128,9 @@ export const deleteUser = async (req, res) => {
     try {
         connection = await db.pool.getConnection();
         // Also delete related profile and phones (if any) - assuming cascade or manual
-        await connection.query("DELETE FROM PHONES WHERE p_id IN (SELECT p_id FROM PROFILE WHERE log_id = ?)", [id]);
-        await connection.query("DELETE FROM PROFILE WHERE log_id = ?", [id]);
-        const [result] = await connection.query("DELETE FROM LOGINS WHERE log_id = ?", [id]);
+        await connection.query("DELETE FROM session WHERE userId = ?", [id]);
+        await connection.query("DELETE FROM account WHERE userId = ?", [id]);
+        const [result] = await connection.query("DELETE FROM user WHERE id = ?", [id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: "Usuario no encontrado" });
         res.json({ success: true });
     } catch (error) {

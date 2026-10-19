@@ -5,6 +5,8 @@ import indexRoutes from './router/routes.js';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import 'dotenv/config';
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth.js";
 
 const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -23,10 +25,11 @@ app.use(cookieParser());
 //==========================================
 app.use(morgan('dev'));
 //=========================================
-// DEFODIFICADOR DE BODY
-
+// DECODIFICADOR DE BODY
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// MANEJADOR DE BETTER-AUTH
+app.all('/api/auth/{*any}', toNodeHandler(auth));
 // ENRUTADOR
 app.use(indexRoutes);
 const port = Number(process.env.PORT || 3000);

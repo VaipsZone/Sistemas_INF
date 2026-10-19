@@ -127,7 +127,7 @@
         const showError = (message) => Swal.fire({ title: 'Error', text: message, icon: 'error', confirmButtonText: 'Cerrar' });
 
         document.getElementById('logoutButton').addEventListener('click', async () => {
-            document.cookie = 'token=; Max-Age=0; path=/';
+            await fetch('/api/auth/sign-out', { method: 'POST' });
             window.location.href = '/login';
         });
 

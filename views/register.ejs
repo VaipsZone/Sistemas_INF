@@ -80,7 +80,7 @@
                                   form.addEventListener('submit', async (e) => {
                                       e.preventDefault();
                                       const formData = new FormData(form);
-                                      const obj = Object.fromEntries(formData.entries());
+                                          const obj = Object.fromEntries(formData.entries());
                                       // Validate passwords match
                                       if (obj.password !== obj.confirmPassword) {
                                           Swal.fire({
@@ -92,10 +92,14 @@
                                           return;
                                       }
                                       try {
-                                          const res = await fetch('/register', {
+                                          const res = await fetch('/api/auth/sign-up/email', {
                                               method: 'POST',
                                               headers: { 'Content-Type': 'application/json' },
-                                              body: JSON.stringify(obj)
+                                              body: JSON.stringify({
+                                                  name: obj.username,
+                                                  email: obj.email,
+                                                  password: obj.password
+                                              })
                                           });
                                           const data = await res.json();
                                           if (res.ok) {

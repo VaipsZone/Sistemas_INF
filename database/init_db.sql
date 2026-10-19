@@ -1,52 +1,69 @@
 -- -------------------------------------------------------
 -- Project Name: TastyApp Database
--- Purpose: Main database schema creation script
+-- Database engine: MySQL
+-- Purpose: Schema used by Better Auth and the application
 -- -------------------------------------------------------
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-  AND table_name NOT IN (
-    'spatial_ref_sys',
-    'geography_columns',
-    'geometry_columns',
-    'pg_stat_statements_info',
-    'pg_stat_statements',
-    'raster_columns',
-    'raster_overviews'
-  );
-DROP TABLE IF EXISTS PHONES;
-DROP TABLE IF EXISTS PROFILE;
-DROP TABLE IF EXISTS LOGINS;
 
+-- Better Auth user records and application roles.
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `emailVerified` tinyint(1) NOT NULL DEFAULT 0,
+  `image` text,
+  `createdAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `role` varchar(50) NOT NULL DEFAULT 'client',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_email_unique` (`email`)
+) ENGINE=InnoDB;
 
--- ---------- TABLE LOGINS -----------
-CREATE TABLE IF NOT EXISTS LOGINS (
-  log_id     int AUTO_INCREMENT,
-  Usuario    varchar(255) NOT NULL,
-  Email varchar(255) NOT NULL,
-  Password   char(100) NOT NULL,
-  Rol        varchar(50) NOT NULL DEFAULT 'client',
-  CONSTRAINT pk_LOGINS PRIMARY KEY (log_id)
-);
+-- Active Better Auth sessions.
+CREATE TABLE IF NOT EXISTS `session` (
+  `id` varchar(36) NOT NULL,
+  `expiresAt` timestamp(3) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `createdAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` timestamp(3) NOT NULL,
+  `ipAddress` text,
+  `userAgent` text,
+  `userId` varchar(36) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `session_token_unique` (`token`),
+  KEY `session_user_id_idx` (`userId`),
+  CONSTRAINT `session_user_id_fk`
+    FOREIGN KEY (`userId`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
--- ---------- TABLE PROFILE -----------
-CREATE TABLE IF NOT EXISTS PROFILE (
-  p_id        int AUTO_INCREMENT,
-  log_id      int NOT NULL,
-  Nombre      varchar(255) NOT NULL,
-  ApellidoP   varchar(255) NOT NULL,
-  ApellidoM   varchar(255),
-  img_path    varchar(255) default 'default.png',
-  CONSTRAINT pk_PROFILE PRIMARY KEY (p_id),
-  CONSTRAINT fk_PROFILE_log_id FOREIGN KEY (log_id) REFERENCES LOGINS(log_id)
-);
+-- Password and provider accounts managed by Better Auth.
+CREATE TABLE IF NOT EXISTS `account` (
+  `id` varchar(36) NOT NULL,
+  `accountId` text NOT NULL,
+  `providerId` text NOT NULL,
+  `userId` varchar(36) NOT NULL,
+  `accessToken` text,
+  `refreshToken` text,
+  `idToken` text,
+  `accessTokenExpiresAt` timestamp(3),
+  `refreshTokenExpiresAt` timestamp(3),
+  `scope` text,
+  `password` text,
+  `createdAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` timestamp(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `account_user_id_idx` (`userId`),
+  CONSTRAINT `account_user_id_fk`
+    FOREIGN KEY (`userId`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
--- ---------- TABLE PHONES -----------
-CREATE TABLE IF NOT EXISTS PHONES (
-  fn_id      int AUTO_INCREMENT,
-  p_id       int NOT NULL,
-  Numero     varchar(10) NOT NULL,
-  Detalles   varchar(255),
-  CONSTRAINT pk_PHONES PRIMARY KEY (fn_id),
-  CONSTRAINT fk_PHONES_p_id FOREIGN KEY (p_id) REFERENCES PROFILE(p_id)
-);
+-- Email verification and password reset tokens.
+CREATE TABLE IF NOT EXISTS `verification` (
+  `id` varchar(36) NOT NULL,
+  `identifier` varchar(255) NOT NULL,
+  `value` text NOT NULL,
+  `expiresAt` timestamp(3) NOT NULL,
+  `createdAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`id`),
+  KEY `verification_identifier_idx` (`identifier`)
+) ENGINE=InnoDB;

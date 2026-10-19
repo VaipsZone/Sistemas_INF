@@ -1,23 +1,33 @@
-import jwt from "jsonwebtoken";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../lib/auth.js";
 
-export const verifyToken = (req, res, next) => {
-    const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({ error: "No autenticado" });
-    }
+export const verifySession = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret");
-        req.user = decoded;
+        const session = await auth.api.getSession({
+            headers: fromNodeHeaders(req.headers),
+        });
+
+        if (!session) {
+            return res.status(401).json({ error: "No autenticado" });
+        }
+
+        req.auth = session;
+        req.user = session.user;
         next();
-    } catch (err) {
-        return res.status(401).json({ error: "Token inválido" });
+    } catch (error) {
+        console.error("Error verificando sesión:", error);
+        return res.status(401).json({ error: "Sesión inválida" });
     }
 };
 
-export const isAdmin = (req, res, next) => {
-    if (req.user && req.user.rol === "admin") {
-        next();
-    } else {
-        return res.status(403).json({ error: "Acceso denegado: se requiere rol admin" });
-    }
+export const requireRole = (roles) => {
+    const allowedRoles = new Set(roles);
+
+    return (req, res, next) => {
+        if (req.user && allowedRoles.has(req.user.role)) {
+            next();
+        } else {
+            return res.status(403).json({ error: "Acceso denegado: no tienes acceso a esta función" });
+        }
+    };
 };

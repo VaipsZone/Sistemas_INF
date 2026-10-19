@@ -1,6 +1,5 @@
 import { Router } from "express";
-import authController from "../controllers/authController.js";
-import { verifyToken, isAdmin } from "../middleware/auth.js";
+import { verifySession, requireRole } from "../middleware/auth.js";
 import { getDashboard, getUsers, createUser, updateUser, deleteUser } from "../controllers/adminController.js";
 
 const router = new Router();
@@ -17,19 +16,14 @@ router.get("/register", (req, res) => {
   res.render("register");
 });
 
-router.post("/register", authController.register);
+router.get("/admin/dashboard", verifySession, requireRole(["admin"]), getDashboard);
 
-// Login route
-router.post("/login", authController.login);
+router.get("/admin/users", verifySession, requireRole(["admin"]), getUsers);
 
-router.get("/admin/dashboard", verifyToken, isAdmin, getDashboard);
+router.post("/admin/users", verifySession, requireRole(["admin"]), createUser);
 
-router.get("/admin/users", verifyToken, isAdmin, getUsers);
+router.post("/admin/users/:id/edit", verifySession, requireRole(["admin"]), updateUser);
 
-router.post("/admin/users", verifyToken, isAdmin, createUser);
-
-router.post("/admin/users/:id/edit", verifyToken, isAdmin, updateUser);
-
-router.delete("/admin/users/:id", verifyToken, isAdmin, deleteUser);
+router.delete("/admin/users/:id", verifySession, requireRole(["admin"]), deleteUser);
 
 export default router;

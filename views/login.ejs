@@ -46,7 +46,7 @@
                                  <span class="input-group-text bg-white">
                                      <i class="bi bi-person-circle"></i>
                                  </span>
-                                 <input type="text" name="username" class="form-control form-control-lg fs-6" placeholder="Usuario" required>
+                                 <input type="email" name="email" class="form-control form-control-lg fs-6" placeholder="Email" required>
                              </div>
                              <div class="input-group mb-3">
                                  <span class="input-group-text bg-white">
@@ -77,24 +77,24 @@
                                       const formData = new FormData(form);
                                       const obj = Object.fromEntries(formData.entries());
                                       try {
-                                          const res = await fetch('/login', {
+                                          const res = await fetch('/api/auth/sign-in/email', {
                                               method: 'POST',
                                               headers: { 'Content-Type': 'application/json' },
                                               body: JSON.stringify(obj)
                                           });
                                           const data = await res.json();
-                                          if (data.success) {
+                                          if (res.ok) {
                                               Swal.fire({
                                                   title: 'Éxito',
                                                   text: 'Inicio de sesión correcto',
                                                   icon: 'success',
                                                   confirmButtonText: 'Aceptar'
                                               });
-                                              window.location.href = data.rol === 'admin' ? '/admin/dashboard' : '/';
+                                              window.location.href = data.user?.role === 'admin' ? '/admin/dashboard' : '/';
                                           } else {
                                               Swal.fire({
                                                   title: 'Error',
-                                                  text: data.error || 'Credenciales inválidas',
+                                                  text: data.message || data.error || 'Credenciales inválidas',
                                                   icon: 'error',
                                                   confirmButtonText: 'Cerrar'
                                               });
