@@ -1,11 +1,12 @@
 import db from "../database/db.js";
 import { auth } from "../lib/auth.js";
-const allowedRoles = new Set(["admin", "client"]);
+const allowedRoles = new Set(["administrativo", "encargado", "enfermeria", "tutor"]);
 const emailPattern = /^\S+@\S+\.\S+$/;
 
-const validateUser = ({ username, email, password, requirePassword = false }) => {
+const validateUser = ({ username, email, password, curp, requirePassword = false }) => {
     if (!username || username.trim().length < 3) return "El usuario debe tener al menos 3 caracteres";
     if (!email || !emailPattern.test(email.trim())) return "El email no es válido";
+    if (curp !== undefined && !/^[A-Z0-9]{18}$/i.test(curp.trim())) return "La CURP debe tener 18 caracteres";
     if (requirePassword && (!password || password.length < 8)) return "La contraseña debe tener al menos 8 caracteres";
     return null;
 };
@@ -20,10 +21,14 @@ const findDuplicate = async (connection, username, email, id = null) => {
 };
 
 export const createUser = async (req, res) => {
-    const { username, email, password, rol = "client" } = req.body;
+    const { username, email, password, curp, rol = "encargado" } = req.body;
     let connection;
     try {
-        const validationError = validateUser({ username, email, password, requirePassword: true });
+        const initialPassword = rol === "tutor" ? String(curp || "").trim().toUpperCase() : password;
+        const validationError = validateUser({
+            username, email, password: initialPassword, curp: rol === "tutor" ? curp : undefined,
+            requirePassword: true,
+        });
         if (validationError) return res.status(400).json({ error: validationError });
         if (!allowedRoles.has(rol)) return res.status(400).json({ error: "Rol no válido" });
         connection = await db.pool.getConnection();
@@ -35,7 +40,7 @@ export const createUser = async (req, res) => {
             body: {
                 name: username.trim(),
                 email: email.trim(),
-                password,
+                password: initialPassword,
             },
         });
 
@@ -47,6 +52,12 @@ export const createUser = async (req, res) => {
             "UPDATE user SET role = ? WHERE id = ?",
             [rol, result.user.id]
         );
+        if (rol === "tutor") {
+            await connection.query(
+                "UPDATE tutores SET user_id = ? WHERE user_id IS NULL AND (UPPER(curp) = ? OR LOWER(email) = LOWER(?))",
+                [result.user.id, initialPassword, email.trim()]
+            );
+        }
 
         res.status(201).json({ success: true, id: result.user.id });
     } catch (error) {

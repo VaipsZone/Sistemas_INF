@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import 'dotenv/config';
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
+import db, { ensureSprint1Schema } from "./database/db.js";
 
 const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,14 @@ app.all('/api/auth/{*any}', toNodeHandler(auth));
 // ENRUTADOR
 app.use(indexRoutes);
 const port = Number(process.env.PORT || 3000);
-app.listen(port);
-console.log('Server on port', port);
-console.log(`http://localhost:${port}/`);
+
+try {
+  await ensureSprint1Schema();
+  app.listen(port);
+  console.log('Server on port', port);
+  console.log(`http://localhost:${port}/`);
+} catch (error) {
+  console.error("No se pudo preparar el esquema de la base de datos:", error);
+  await db.pool.end();
+  process.exitCode = 1;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Mis menores - TastyApp</title>
+    <%- include('../partials/head.ejs') -%>
+    <style>
+        .tutor-dashboard .card { background: #fff; }
+        .status-indicator { min-width: 155px; }
+    </style>
+</head>
+<body class="bg-light">
+<%- include('../partials/navbar.ejs') -%>
+<main class="container py-5 tutor-dashboard">
+    <div class="mb-4">
+        <p class="text-primary fw-semibold mb-1">Panel de tutores</p>
+        <h1 class="fw-bold">Mis menores</h1>
+        <p class="text-muted">Gestiona quién puede recogerlos hoy, <%= fecha %>.</p>
+    </div>
+    <% if (!menores.length) { %>
+        <div class="alert alert-info">No tienes menores activos asignados a tu cuenta.</div>
+    <% } %>
+    <div class="row g-4">
+        <% menores.forEach((menor) => { %>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div><h2 class="h5 mb-1"><%= menor.nombre %></h2><p class="text-muted mb-3">Personas relacionadas autorizables</p></div>
+                            <% if (Number(menor.puede_recoger_hoy) === 1) { %>
+                                <span class="badge bg-success text-white status-indicator">Puedes recoger hoy</span>
+                            <% } else { %>
+                                <span class="badge bg-secondary text-white status-indicator">No autorizado hoy</span>
+                            <% } %>
+                        </div>
+                        <% if (Number(menor.es_principal) === 1) { %>
+                            <form class="authorization-form">
+                                <input type="hidden" name="menor_id" value="<%= menor.id %>">
+                                <label class="form-label fw-semibold">¿Quién recogerá hoy?</label>
+                                <div class="input-group">
+                                    <select class="form-select" name="tutor_id" required>
+                                        <option value="">Seleccionar tutor</option>
+                                        <% menor.tutores.forEach((tutor) => { %>
+                                            <option value="<%= tutor.id %>"><%= tutor.nombre %></option>
+                                        <% }); %>
+                                    </select>
+                                    <button class="btn btn-primary">Guardar</button>
+                                </div>
+                            </form>
+                        <% } else { %>
+                            <p class="small text-muted mb-0">El tutor principal gestiona la autorización de recolección.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</main>
+<%- include('../partials/footer.ejs') -%>
+<script>
+document.querySelectorAll('.authorization-form').forEach((form) => form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = await fetch('/tutor/autorizaciones', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(Object.fromEntries(new FormData(form)))
+    });
+    const result = await response.json();
+    await Swal.fire(result.success ? 'Autorización guardada' : 'No se pudo guardar', result.message || result.error, result.success ? 'success' : 'error');
+    if (result.success) window.location.reload();
+}));
+</script>
+</body>
+</html>

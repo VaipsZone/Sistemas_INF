@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Registrar menor - TastyApp</title>
+    <%- include('../partials/head.ejs') -%>
+</head>
+<body class="bg-light">
+<%- include('../partials/navbar.ejs') -%>
+<main class="container py-5">
+    <div class="mb-4"><a href="/admin/menores" class="text-decoration-none">&larr; Volver a menores</a><h1 class="fw-bold mt-2">Registrar menor</h1></div>
+    <form id="minorForm" class="card shadow-sm border-0 p-4">
+        <h5>Datos del menor</h5>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Nombre</label><input class="form-control" name="nombre" required></div>
+            <div class="col-md-4"><label class="form-label">Apellido paterno</label><input class="form-control" name="apellido_pat" required></div>
+            <div class="col-md-4"><label class="form-label">Apellido materno</label><input class="form-control" name="apellido_mat" required></div>
+            <div class="col-md-4"><label class="form-label">CURP</label><input class="form-control" name="curp" minlength="18" maxlength="18" required></div>
+            <div class="col-md-4"><label class="form-label">Fecha de nacimiento</label><input type="date" class="form-control" name="fecha_nacimiento" required></div>
+            <div class="col-md-4"><label class="form-label">Familia</label><input class="form-control" name="familia" required></div>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center"><h5>Tutor principal</h5><span class="text-muted small">Obligatorio</span></div>
+        <div id="tutors"></div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-3" id="addTutor">Agregar tutor adicional</button>
+        <div class="mt-4"><button class="btn btn-primary">Guardar registro</button></div>
+    </form>
+</main>
+<%- include('../partials/footer.ejs') -%>
+<script>
+    const tutors = document.getElementById('tutors');
+    const addTutor = (type = 'padre') => {
+        if (tutors.children.length >= 5) return Swal.fire('Límite alcanzado', 'Solo se permiten cuatro tutores adicionales.', 'warning');
+        const index = tutors.children.length;
+        const item = document.createElement('fieldset');
+        item.className = 'border rounded p-3 mt-3';
+        item.innerHTML = `<legend class="float-none w-auto px-2 fs-6">Tutor ${index + 1}</legend>
+            <div class="row g-3">
+              <div class="col-md-4"><input class="form-control" name="tutores[${index}][nombre]" placeholder="Nombre" required></div>
+              <div class="col-md-4"><input class="form-control" name="tutores[${index}][apellido_pat]" placeholder="Apellido paterno" required></div>
+              <div class="col-md-4"><input class="form-control" name="tutores[${index}][apellido_mat]" placeholder="Apellido materno" required></div>
+              <div class="col-md-4"><input class="form-control" name="tutores[${index}][curp]" placeholder="CURP" minlength="18" maxlength="18" required></div>
+              <div class="col-md-4"><input class="form-control" name="tutores[${index}][telefono]" placeholder="Teléfono" required></div>
+              <div class="col-md-4"><input type="email" class="form-control" name="tutores[${index}][email]" placeholder="Email" required></div>
+              <div class="col-md-6"><select class="form-select" name="tutores[${index}][tipo_parentesco]"><option value="padre">Padre</option><option value="madre">Madre</option><option value="tutor_principal">Tutor principal</option><option value="tutor_adicional">Tutor adicional</option></select></div>
+            </div>`;
+        tutors.appendChild(item);
+    };
+    addTutor();
+    document.getElementById('addTutor').addEventListener('click', () => addTutor('tutor_adicional'));
+    document.getElementById('minorForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(event.target).entries());
+        data.tutores = Array.from(tutors.children).map((_, index) => Object.fromEntries(
+            Object.entries(data).filter(([key]) => key.startsWith(`tutores[${index}]`)).map(([key, value]) => [key.match(/\[([^\]]+)\]$/)[1], value])
+        ));
+        try {
+            const response = await fetch('/admin/menores', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const result = await response.json();
+            if (!response.ok) return Swal.fire('No se pudo guardar', result.error, 'error');
+            await Swal.fire('Registro guardado', result.message, 'success');
+            window.location.href = '/admin/menores';
+        } catch { Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error'); }
+    });
+</script>
+</body>
+</html>

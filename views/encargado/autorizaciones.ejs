@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><title>Autorizaciones - TastyApp</title><%- include('../partials/head.ejs') -%></head>
+<body class="bg-light">
+<%- include('../partials/navbar.ejs') -%>
+<main class="container py-5">
+    <h1 class="fw-bold">Autorizaciones de recolección</h1><p class="text-muted">Fecha: <%= fecha %></p>
+    <div class="card border-0 shadow-sm"><div class="table-responsive"><table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th>Menor</th><th>Autorización de hoy</th><th>Registrar</th></tr></thead>
+        <tbody><% menores.forEach((menor) => { %><tr><td><%= menor.nombre %></td><td><%= menor.tutor || 'Sin autorización' %></td><td>
+            <form class="authorization-form d-flex gap-2"><input type="hidden" name="menor_id" value="<%= menor.id %>">
+                <select class="form-select" name="tutor_id" required>
+                    <option value="">Seleccionar tutor</option>
+                    <% menor.tutores.forEach((tutor) => { %>
+                        <option value="<%= tutor.id %>"><%= tutor.nombre %> <%= tutor.apellido_pat %> <%= tutor.apellido_mat %></option>
+                    <% }); %>
+                </select>
+                <button class="btn btn-primary text-nowrap">Autorizar</button>
+            </form>
+        </td></tr><% }); %></tbody>
+    </table></div></div>
+</main>
+<%- include('../partials/footer.ejs') -%>
+<script>
+document.querySelectorAll('.authorization-form').forEach((form) => form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = await fetch('/encargado/autorizaciones/verificar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.fromEntries(new FormData(form)))});
+    const result = await response.json();
+    Swal.fire(result.success ? 'Autorizado' : 'Bloqueado', result.message || result.error, result.success ? 'success' : 'error').then(() => { if (result.success) location.reload(); });
+}));
+</script>
+</body>
+</html>

@@ -13,6 +13,7 @@ export const verifySession = async (req, res, next) => {
 
         req.auth = session;
         req.user = session.user;
+        res.locals.currentUser = session.user;
         next();
     } catch (error) {
         console.error("Error verificando sesión:", error);
@@ -22,7 +23,6 @@ export const verifySession = async (req, res, next) => {
 
 export const requireRole = (roles) => {
     const allowedRoles = new Set(roles);
-
     return (req, res, next) => {
         if (req.user && allowedRoles.has(req.user.role)) {
             next();

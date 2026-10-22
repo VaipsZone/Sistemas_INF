@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Menú principal - TastyApp</title>
+    <%- include('partials/head.ejs') -%>
+</head>
+<body class="bg-light">
+    <%- include('partials/navbar.ejs') -%>
+    <main class="container py-5">
+        <div class="mb-4">
+            <p class="text-primary fw-semibold mb-1">Panel principal</p>
+            <h1 class="fw-bold">¿Qué deseas hacer?</h1>
+            <p class="text-muted mb-0">Selecciona una sección para continuar.</p>
+        </div>
+        <div class="row g-4">
+            <% if (role === 'administrativo') { %>
+                <div class="col-md-6 col-xl-4">
+                    <a href="/admin/dashboard" class="card h-100 text-decoration-none shadow-sm border-0">
+                        <div class="card-body p-4"><i class="bi bi-people fs-1 text-primary"></i><h3 class="h5 mt-3 text-dark">Usuarios</h3><p class="text-muted mb-0">Administra las cuentas y roles del sistema.</p></div>
+                    </a>
+                </div>
+                <div class="col-md-6 col-xl-4">
+                    <a href="/admin/menores" class="card h-100 text-decoration-none shadow-sm border-0">
+                        <div class="card-body p-4"><i class="bi bi-person-vcard fs-1 text-primary"></i><h3 class="h5 mt-3 text-dark">Menores</h3><p class="text-muted mb-0">Registra familias, menores y tutores.</p></div>
+                    </a>
+                </div>
+            <% } else if (role === 'encargado') { %>
+                <div class="col-md-6 col-xl-4">
+                    <a href="/encargado/autorizaciones" class="card h-100 text-decoration-none shadow-sm border-0">
+                        <div class="card-body p-4"><i class="bi bi-check2-square fs-1 text-primary"></i><h3 class="h5 mt-3 text-dark">Autorizaciones</h3><p class="text-muted mb-0">Valida la recolección de menores del día.</p></div>
+                    </a>
+                </div>
+            <% } else if (role === 'enfermeria') { %>
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm border-0"><div class="card-body p-4"><i class="bi bi-heart-pulse fs-1 text-primary"></i><h3 class="h5 mt-3">Enfermería</h3><p class="text-muted mb-0">No hay módulos disponibles para este rol en el Sprint 1.</p></div></div>
+                </div>
+            <% } else if (role === 'tutor') { %>
+                <div class="col-md-6 col-xl-4">
+                    <a href="/tutor/dashboard" class="card h-100 text-decoration-none shadow-sm border-0">
+                        <div class="card-body p-4"><i class="bi bi-person-check fs-1 text-primary"></i><h3 class="h5 mt-3 text-dark">Mis menores</h3><p class="text-muted mb-0">Gestiona autorizaciones y consulta tu estado de recolección.</p></div>
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </main>
+    <%- include('partials/footer.ejs') -%>
+</body>
+</html>

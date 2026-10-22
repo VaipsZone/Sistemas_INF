@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Markdown files for documentation
+ROADMAP.md
+Changes_Sprint1.md

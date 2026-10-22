@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Editar menor - TastyApp</title>
+    <%- include('../partials/head.ejs') -%>
+</head>
+<body class="bg-light">
+<%- include('../partials/navbar.ejs') -%>
+<main class="container py-5">
+    <div class="mb-4"><a href="/admin/menores" class="text-decoration-none">&larr; Volver a menores</a><h1 class="fw-bold mt-2">Editar menor</h1></div>
+    <form id="minorEditForm" class="card shadow-sm border-0 p-4">
+        <h5>Datos del menor</h5>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Nombre</label><input class="form-control" name="nombre" value="<%= menor.nombre %>" required></div>
+            <div class="col-md-4"><label class="form-label">Apellido paterno</label><input class="form-control" name="apellido_pat" value="<%= menor.apellido_pat %>" required></div>
+            <div class="col-md-4"><label class="form-label">Apellido materno</label><input class="form-control" name="apellido_mat" value="<%= menor.apellido_mat %>" required></div>
+            <div class="col-md-4"><label class="form-label">CURP</label><input class="form-control" name="curp" value="<%= menor.curp %>" minlength="18" maxlength="18" required></div>
+            <div class="col-md-4"><label class="form-label">Fecha de nacimiento</label><input type="date" class="form-control" name="fecha_nacimiento" value="<%= String(menor.fecha_nacimiento).slice(0, 10) %>" required></div>
+            <div class="col-md-4"><label class="form-label">Familia</label><input class="form-control" name="familia" value="<%= menor.familia %>" required></div>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex justify-content-between align-items-center"><h5>Tutores</h5><span class="text-muted small">Debe conservar al menos un tutor principal</span></div>
+        <div id="tutors">
+            <% tutores.forEach((tutor, index) => { %>
+                <fieldset class="border rounded p-3 mt-3 tutor-item">
+                    <legend class="float-none w-auto px-2 fs-6">Tutor <%= index + 1 %></legend>
+                    <input type="hidden" name="tutores[<%= index %>][id]" value="<%= tutor.id %>">
+                    <div class="row g-3">
+                        <div class="col-md-4"><input class="form-control" name="tutores[<%= index %>][nombre]" value="<%= tutor.nombre %>" placeholder="Nombre" required></div>
+                        <div class="col-md-4"><input class="form-control" name="tutores[<%= index %>][apellido_pat]" value="<%= tutor.apellido_pat %>" placeholder="Apellido paterno" required></div>
+                        <div class="col-md-4"><input class="form-control" name="tutores[<%= index %>][apellido_mat]" value="<%= tutor.apellido_mat %>" placeholder="Apellido materno" required></div>
+                        <div class="col-md-4"><input class="form-control" name="tutores[<%= index %>][curp]" value="<%= tutor.curp %>" minlength="18" maxlength="18" placeholder="CURP" required></div>
+                        <div class="col-md-4"><input class="form-control" name="tutores[<%= index %>][telefono]" value="<%= tutor.telefono %>" placeholder="Teléfono" required></div>
+                        <div class="col-md-4"><input type="email" class="form-control" name="tutores[<%= index %>][email]" value="<%= tutor.email %>" placeholder="Email" required></div>
+                        <div class="col-md-8"><select class="form-select" name="tutores[<%= index %>][tipo_parentesco]">
+                            <option value="padre" <%= tutor.tipo_parentesco === 'padre' ? 'selected' : '' %>>Padre</option>
+                            <option value="madre" <%= tutor.tipo_parentesco === 'madre' ? 'selected' : '' %>>Madre</option>
+                            <option value="tutor_principal" <%= tutor.tipo_parentesco === 'tutor_principal' ? 'selected' : '' %>>Tutor principal</option>
+                            <option value="tutor_adicional" <%= tutor.tipo_parentesco === 'tutor_adicional' ? 'selected' : '' %>>Tutor adicional</option>
+                        </select></div>
+                        <div class="col-md-4 d-flex align-items-center"><button type="button" class="btn btn-outline-danger remove-tutor">Quitar tutor</button></div>
+                    </div>
+                </fieldset>
+            <% }); %>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mt-3" id="addTutor">Agregar tutor</button>
+        <div class="mt-4"><button class="btn btn-primary">Guardar cambios</button></div>
+    </form>
+</main>
+<%- include('../partials/footer.ejs') -%>
+<script>
+    const tutors = document.getElementById('tutors');
+    const addTutor = () => {
+        if (tutors.children.length >= 5) return Swal.fire('Límite alcanzado', 'Solo se permiten cuatro tutores adicionales.', 'warning');
+        const index = tutors.children.length;
+        const item = document.createElement('fieldset');
+        item.className = 'border rounded p-3 mt-3 tutor-item';
+        item.innerHTML = `<legend class="float-none w-auto px-2 fs-6">Nuevo tutor</legend><div class="row g-3">
+            <div class="col-md-4"><input class="form-control" name="tutores[${index}][nombre]" placeholder="Nombre" required></div>
+            <div class="col-md-4"><input class="form-control" name="tutores[${index}][apellido_pat]" placeholder="Apellido paterno" required></div>
+            <div class="col-md-4"><input class="form-control" name="tutores[${index}][apellido_mat]" placeholder="Apellido materno" required></div>
+            <div class="col-md-4"><input class="form-control" name="tutores[${index}][curp]" minlength="18" maxlength="18" placeholder="CURP" required></div>
+            <div class="col-md-4"><input class="form-control" name="tutores[${index}][telefono]" placeholder="Teléfono" required></div>
+            <div class="col-md-4"><input type="email" class="form-control" name="tutores[${index}][email]" placeholder="Email" required></div>
+            <div class="col-md-8"><select class="form-select" name="tutores[${index}][tipo_parentesco]"><option value="tutor_adicional">Tutor adicional</option><option value="padre">Padre</option><option value="madre">Madre</option><option value="tutor_principal">Tutor principal</option></select></div>
+            <div class="col-md-4"><button type="button" class="btn btn-outline-danger remove-tutor">Quitar tutor</button></div></div>`;
+        tutors.appendChild(item);
+    };
+    document.getElementById('addTutor').addEventListener('click', addTutor);
+    tutors.addEventListener('click', (event) => {
+        if (event.target.classList.contains('remove-tutor')) event.target.closest('.tutor-item').remove();
+    });
+    document.getElementById('minorEditForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const values = Object.fromEntries(new FormData(event.target).entries());
+        values.tutores = Array.from(tutors.querySelectorAll('.tutor-item')).map((item, index) => Object.fromEntries(
+            Array.from(item.querySelectorAll('[name]')).map((field) => [field.name.match(/\[([^\]]+)\]$/)[1], field.value])
+        ));
+        try {
+            const response = await fetch('/admin/menores/<%= menor.id %>', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(values) });
+            const result = await response.json();
+            if (!response.ok) return Swal.fire('No se pudo actualizar', result.error, 'error');
+            await Swal.fire('Actualizado', result.message, 'success');
+            window.location.href = '/admin/menores';
+        } catch { Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error'); }
+    });
+</script>
+</body>
+</html>

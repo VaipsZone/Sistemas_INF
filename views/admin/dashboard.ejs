@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/css/login.css">
 </head>
 <body class="bg-light">
+    <%- include('../partials/navbar.ejs') -%>
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="fw-bold">Administración de Usuarios</h1>
@@ -13,7 +14,6 @@
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
                     <i class="bi bi-person-plus me-1"></i>Nuevo usuario
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="logoutButton">Cerrar sesión</button>
             </div>
         </div>
 
@@ -59,16 +59,24 @@
                             <label for="createEmail" class="form-label">Email</label>
                             <input type="email" class="form-control" name="email" id="createEmail" required>
                         </div>
+                        <div class="mb-3" id="createCurpGroup">
+                            <label for="createCurp" class="form-label">CURP del tutor</label>
+                            <input type="text" class="form-control" name="curp" id="createCurp" minlength="18" maxlength="18">
+                            <div class="form-text">Para un tutor, la CURP será su contraseña inicial.</div>
+                        </div>
                         <div class="mb-3">
                             <label for="createRol" class="form-label">Rol</label>
                             <select class="form-select" name="rol" id="createRol" required>
-                                <option value="client">Cliente</option>
-                                <option value="admin">Administrador</option>
+                                <option value="administrativo">Administrativo</option>
+                                <option value="encargado">Encargado</option>
+                                <option value="enfermeria">Enfermería</option>
+                                <option value="tutor">Tutor</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="createPassword" class="form-label">Contraseña</label>
                             <input type="password" class="form-control" name="password" id="createPassword" minlength="8" required>
+                            <div class="form-text" id="createPasswordHelp">No aplica para tutores: se usará su CURP.</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -102,8 +110,10 @@
                         <div class="mb-3">
                             <label for="editRol" class="form-label">Rol</label>
                             <select class="form-select" name="rol" id="editRol" required>
-                                <option value="client">Cliente</option>
-                                <option value="admin">Administrador</option>
+                                <option value="administrativo">Administrativo</option>
+                                <option value="encargado">Encargado</option>
+                                <option value="enfermeria">Enfermería</option>
+                                <option value="tutor">Tutor</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -125,11 +135,19 @@
 
     <script>
         const showError = (message) => Swal.fire({ title: 'Error', text: message, icon: 'error', confirmButtonText: 'Cerrar' });
-
-        document.getElementById('logoutButton').addEventListener('click', async () => {
-            await fetch('/api/auth/sign-out', { method: 'POST' });
-            window.location.href = '/login';
-        });
+        const createRol = document.getElementById('createRol');
+        const createCurpGroup = document.getElementById('createCurpGroup');
+        const createCurp = document.getElementById('createCurp');
+        const createPassword = document.getElementById('createPassword');
+        const updateCreateFields = () => {
+            const isTutor = createRol.value === 'tutor';
+            createCurpGroup.classList.toggle('d-none', !isTutor);
+            createCurp.required = isTutor;
+            createPassword.required = !isTutor;
+            createPassword.disabled = isTutor;
+        };
+        createRol.addEventListener('change', updateCreateFields);
+        updateCreateFields();
 
         document.getElementById('createForm').addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -165,7 +183,7 @@
                         <td>${user.log_id}</td>
                         <td>${user.Usuario}</td>
                         <td>${user.Email}</td>
-                        <td><span class="badge bg-${user.Rol === 'admin' ? 'danger' : 'secondary'}">${user.Rol}</span></td>
+                        <td><span class="badge bg-${user.Rol === 'administrativo' ? 'danger' : 'secondary'}">${user.Rol}</span></td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${user.log_id}" data-username="${user.Usuario}" data-email="${user.Email}" data-rol="${user.Rol}"><i class="bi bi-pencil"></i></button>
                             <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${user.log_id}" data-username="${user.Usuario}"><i class="bi bi-trash"></i></button>
